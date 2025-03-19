@@ -1,20 +1,20 @@
 #include "imports/stdlib.fc";
 ;; storage variables
-
+;;; address of the jetton contract, where the jettons are stored
 global slice jetton_address;
-;; who deployed the contract and sent the tokens
+;;; who deployed the contract and sent the tokens
 global slice jettons_giver;
-;; who would receive the jettons after success transaction
+;;; who would receive the jettons after success transaction
 global slice jettons_receiver;
-;; amount of jettons to be transferred
+;;; amount of jettons to be transferred
 global int amount;
-;; expiration time of the contract
+;;; expiration time of the contract
 global int expiration_time;
-;; hash H, when x present, s.t. SHA256(x) = H, where x is the secret the funds are unlocked to the receiver
+;;; hash H, when x present, s.t. SHA256(x) = H, where x is the secret the funds are unlocked to the receiver
 global int hash;
 
 
-;; load_data populates storage variables using stored data
+;;; load_data populates storage variables using stored data
 () load_data() impure inline_ref {
     var ds = get_data().begin_parse();
     {
@@ -31,7 +31,7 @@ global int hash;
     ds.end_parse();
 }
 
-;; save_data stores storage variables as a cell into persistent storage
+;;; save_data stores storage variables as a cell into persistent storage
 () save_data() impure inline {
     set_data(
         begin_cell()
