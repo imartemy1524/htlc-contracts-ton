@@ -1,0 +1,53 @@
+#include "consts.fc";
+#include "imports/stdlib.fc";
+#include "data.fc";
+() send_rest_funds(slice to, int message, int length) impure inline {
+    raw_reserve(fee::reserve, RESERVE_AT_MOST);
+    cell msg2sender = begin_cell()
+        .store_uint(0x18, 6)
+        .store_slice(to)
+        .store_uint(message, 4 + 1 + 4 + 4 + 64 + 32 + 1 + 1 + (32 + length)) ;; 32 bits empty (comment padding) and length - length of comment
+        .end_cell();
+    send_raw_message(msg2sender,  SEND_MODE_IGNORE_ERRORS | SEND_MODE_CARRY_ALL_BALANCE | SEND_MODE_PAY_FEES_SEPARATELY);
+}
+() send_jettons_to(slice to, slice excess) impure inline_ref {
+    [int balance, cell __]  = get_balance();
+    throw_if(error::not_enough_balance, balance < fee::min_balance);
+    send_raw_message(begin_cell()
+        .store_uint(0x18, 6)
+        .store_slice(jetton_address)
+        .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1 + 4)
+        .store_ref(begin_cell()
+            .store_uint(op::jetton::transfer << 64, 32 + 64) ;; op code + query id(0)
+            .store_coins(amount) ;; amount
+            .store_slice(to) ;; recipient
+            .store_slice(excess) ;; excess
+        ;; .store_uint(0, 1) ;; maybe<custom_payload>
+        ;; .store_coins(1)  ;; fwd_fee
+        ;; .store_uint(1, 1) ;; forward_payload
+            .store_uint(515, 14) ;; instead 3 top lines use hardcoded constant
+            .store_ref(
+                begin_cell()
+                    .store_uint(const::message::jetton_send, (const::message::jetton_send::length) + 32) ;; comment in maybe<forward_payload>
+                    .end_cell()
+
+            )
+            .end_cell()
+        )
+        .end_cell(),
+        SEND_MODE_BOUNCE_ON_ACTION_FAIL | SEND_MODE_CARRY_ALL_BALANCE | SEND_MODE_DESTROY ;; BounceIfFailed | PayFeesExternal
+    );
+
+}
+
+
+() require_not_expired() impure inline {
+    throw_if(error::expired,expiration_time < now());
+}
+() require_expired() impure inline {
+    throw_if(error::not_expired,expiration_time >= now());
+}
+() require_hash_valid(slice data) impure inline {
+    int hash_of_data = string_hash(data);
+    throw_if(error::invalid_hash, hash_of_data != hash);
+}

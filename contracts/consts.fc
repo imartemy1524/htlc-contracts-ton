@@ -1,0 +1,19 @@
+const op::deploy = "op::deploy"c; ;; create an opcode from string using the "c" prefix, this results in 0x7e8764ef opcode in this case
+const op::provide_data = "op::provide_data"c; ;; opcode to provide data, which hash equals to current
+const op::withdraw_expired = "op::withdraw_expired"c; ;; opcode to withdraw expired data
+
+const op::jetton::transfer = 0x0f8a7ea5;
+
+const fee::reserve = 10000000;  ;; create a constant with the value of 0.01 TONs
+const fee::min_balance = 50000000; ;; 0.05 TONs
+
+const error::already_deployed = 1233;
+const error::expired = 1234;
+const error::not_expired = 1235;
+const error::invalid_hash = 1236;
+const error::not_enough_balance = 1237;
+
+
+
+const const::message::jetton_send = "coins received"u;
+const const::message::jetton_send::length = 14 * 8;

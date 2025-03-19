@@ -1,0 +1,15 @@
+anycast_info$_ depth:(#<= 30) { depth >= 1 }
+   rewrite_pfx:(bits depth) = Anycast;
+addr_none$00 = MsgAddressExt;
+addr_std$10 anycast:(Maybe Anycast)
+   workchain_id:int8 address:bits256  = MsgAddressInt;
+
+contract_data#_
+    jetton:MsgAddressInt
+    = DeployData;
+
+// deploy the contract
+deploy#822d8ae data:^DeployData = InMsgBody;
+provide_data#e64ad8ec data:Anycast = InMsgBody;
+withdraw_expired#d0066d3b = InMsgBody;
+

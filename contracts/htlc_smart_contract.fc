@@ -1,0 +1,59 @@
+#include "imports/stdlib.fc";
+#include "consts.fc";
+#include "helpers.fc";
+
+;; recv_internal is the main function of the contract and is called when it receives a message from other contracts
+() recv_internal(cell in_msg_full, slice in_msg_body) impure {
+    if (in_msg_body.slice_empty?()) { ;; ignore all empty messages
+        return ();
+    }
+
+    slice cs = in_msg_full.begin_parse();
+    int flags = cs~load_uint(4);
+    if (flags & 1) { ;; ignore all bounced messages
+        return ();
+    }
+    slice sender_address = cs~load_msg_addr();
+    int op = in_msg_body~load_uint(32);
+    load_data(); ;; here we populate the storage variables
+
+
+    if (op == op::deploy) {
+        throw_unless(error::already_deployed, is_address_none(jetton_address));
+        jetton_address = in_msg_body~load_msg_addr();
+        save_data();
+        send_rest_funds(sender_address, "success"u, 7 * 8);
+        return ();
+    }
+    if (op == op::provide_data) {
+        require_not_expired();
+        require_hash_valid(in_msg_body);
+        send_jettons_to(jettons_receiver, sender_address);
+        return ();
+    }
+    if (op == op::withdraw_expired) {
+        require_expired();
+        send_jettons_to(jettons_giver, sender_address);
+        return ();
+    }
+
+    throw(0xffff); ;; if the message contains an op that is not known to this contract, we throw
+}
+
+;; get methods are a means to conveniently read contract data using, for example, HTTP APIs
+;; they are marked with method_id
+;; note that unlike in many other smart contract VMs, get methods cannot be called by other contracts
+
+
+(slice, slice, slice, int, int, int) data() method_id {
+    load_data();
+    return (
+        jetton_address,
+        jettons_giver,
+        jettons_receiver,
+        amount,
+        expiration_time,
+        hash
+    );
+}
+
